@@ -1,0 +1,27 @@
+{
+  "name": "Branch Shift",
+  "version": "1.0.0",
+  "description": "GitHub Action in TypeScript to quickly rename branches via GitHub API",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ncc build src/index.ts -o dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ws2git/branch-shift.git"
+  },
+  "keywords": [],
+  "author": "rmottanet",
+  "license": "Apache",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@vercel/ncc": "^0.38.4",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1"
+  }
+}

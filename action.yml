@@ -1,0 +1,26 @@
+name: 'Branch Shift'
+description: 'Renames a branch using the GitHub API'
+author: 'rmottanet'
+branding:
+  icon: 'git-branch'
+  color: 'orange'
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+  owner:
+    description: 'Repository owner'
+    required: true
+  repo:
+    description: 'Repository name'
+    required: true
+  branch:
+    description: 'Current branch name'
+    required: true
+  new_name:
+    description: 'New branch name'
+    required: true
+
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
