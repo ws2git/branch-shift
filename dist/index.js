@@ -29963,13 +29963,17 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
+/**
+ * Main asynchronous function.
+ * @returns {Promise<void>}
+ */
 async function run() {
     try {
-        const githubToken = core.getInput('github_token', { required: true });
-        const owner = core.getInput('owner', { required: true });
-        const repo = core.getInput('repo', { required: true });
-        const branch = core.getInput('branch', { required: true });
-        const newName = core.getInput('new_name', { required: true });
+        const githubToken = core.getInput('github_token', { required: true }).trim();
+        const owner = core.getInput('owner', { required: true }).trim();
+        const repo = core.getInput('repo', { required: true }).trim();
+        const branch = core.getInput('branch', { required: true }).trim();
+        const newName = core.getInput('new_name', { required: true }).trim();
         const octokit = github.getOctokit(githubToken);
         core.info(`Renaming branch '${branch}' to '${newName}' in ${owner}/${repo}...`);
         await octokit.request('POST /repos/{owner}/{repo}/branches/{branch}/rename', {
@@ -29984,10 +29988,15 @@ async function run() {
         core.info(`Branch '${branch}' renamed to '${newName}' successfully.`);
     }
     catch (error) {
-        core.setFailed(`Failed to rename branch: ${error.message}`);
+        if (error instanceof Error) {
+            core.setFailed(`Action failed due to error: ${error.message}`);
+        }
+        else {
+            core.setFailed('Action failed with an unknown error.');
+        }
     }
 }
-run();
+void run();
 
 
 /***/ }),
