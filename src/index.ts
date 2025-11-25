@@ -2,6 +2,22 @@ import * as core from '@actions/core'
 import * as github from '@actions/github';
 
 /**
+* Helper function to validate inputs before execution.
+* Throws an error if any validation fails.
+*/
+function validateInputs(owner: string, repo: string, branch: string, newName: string): void {
+  if (!owner || !repo || !branch || !newName) {
+    throw new Error('All input fields (owner, repo, branch, new_name) are required..');
+  }
+  
+  const branchRegex = /^[a-zA-Z0-9-_./]+$/;
+  if (!branchRegex.test(newName)) {
+    throw new Error(`The new branch name is invalid: '${newName}'. Allowed characters: a-z, A-Z, 0-9, -, _, ., /`);
+  }
+}
+
+
+/**
  * Main asynchronous function.
  * @returns {Promise<void>}
  */
@@ -12,10 +28,12 @@ async function run(): Promise<void> {
     const repo: string = core.getInput('repo', { required: true }).trim();
     const branch: string = core.getInput('branch', { required: true }).trim();
     const newName: string = core.getInput('new_name', { required: true }).trim();
-
+    
+    validateInputs(owner, repo, branch, newName);
+    
     const octokit = github.getOctokit(githubToken);
 
-    core.info(`Renaming branch '${branch}' to '${newName}' in ${owner}/${repo}...`);
+    core.info(`Iniciando a renomeação da branch '${branch}' para '${newName}' no repositório ${owner}/${repo}...`);
 
     await octokit.request('POST /repos/{owner}/{repo}/branches/{branch}/rename', {
       owner,
@@ -27,7 +45,7 @@ async function run(): Promise<void> {
       },
     });
 
-    core.info(`Branch '${branch}' renamed to '${newName}' successfully.`);
+    core.info(`✅ Branch '${branch}' renomeada com sucesso para '${newName}'.`);
     
   } catch (error: unknown) {
     if (error instanceof Error) {

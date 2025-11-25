@@ -29964,6 +29964,19 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 /**
+* Helper function to validate inputs before execution.
+* Throws an error if any validation fails.
+*/
+function validateInputs(owner, repo, branch, newName) {
+    if (!owner || !repo || !branch || !newName) {
+        throw new Error('All input fields (owner, repo, branch, new_name) are required..');
+    }
+    const branchRegex = /^[a-zA-Z0-9-_./]+$/;
+    if (!branchRegex.test(newName)) {
+        throw new Error(`The new branch name is invalid: '${newName}'. Allowed characters: a-z, A-Z, 0-9, -, _, ., /`);
+    }
+}
+/**
  * Main asynchronous function.
  * @returns {Promise<void>}
  */
@@ -29974,8 +29987,9 @@ async function run() {
         const repo = core.getInput('repo', { required: true }).trim();
         const branch = core.getInput('branch', { required: true }).trim();
         const newName = core.getInput('new_name', { required: true }).trim();
+        validateInputs(owner, repo, branch, newName);
         const octokit = github.getOctokit(githubToken);
-        core.info(`Renaming branch '${branch}' to '${newName}' in ${owner}/${repo}...`);
+        core.info(`Iniciando a renomeação da branch '${branch}' para '${newName}' no repositório ${owner}/${repo}...`);
         await octokit.request('POST /repos/{owner}/{repo}/branches/{branch}/rename', {
             owner,
             repo,
@@ -29985,7 +29999,7 @@ async function run() {
                 'X-GitHub-Api-Version': '2022-11-28',
             },
         });
-        core.info(`Branch '${branch}' renamed to '${newName}' successfully.`);
+        core.info(`✅ Branch '${branch}' renomeada com sucesso para '${newName}'.`);
     }
     catch (error) {
         if (error instanceof Error) {
