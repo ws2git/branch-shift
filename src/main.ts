@@ -1,33 +1,21 @@
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 import { ConfigManager } from './config';
+import { GitHubService } from './services/github.service';
 
-/**
- * Main asynchronous function.
- * @returns {Promise<void>}
- */
 async function run(): Promise<void> {
   try {
     core.info('-> Initializing action...');
-
+    
     const inputs = ConfigManager.getInputs();
     core.info('✅ Inputs validated.');
 
-    const octokit = github.getOctokit(inputs.githubToken);
+    const gitService = new GitHubService(inputs.githubToken);
 
     core.info(`Starting the renaming of '${inputs.branch}' to '${inputs.newName}'...`);
 
-    await octokit.request('POST /repos/{owner}/{repo}/branches/{branch}/rename', {
-      owner: inputs.owner,
-      repo: inputs.repo,
-      branch: inputs.branch,
-      new_name: inputs.newName,
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
+    await gitService.renameBranch(inputs.owner, inputs.repo, inputs.branch, inputs.newName);
 
-    core.info(`✅ Branch renomeada com sucesso.`);
+    core.info(`✅ Branch renamed successfully.`);
 
   } catch (error: unknown) {
     if (error instanceof Error) {

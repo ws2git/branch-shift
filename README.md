@@ -24,7 +24,7 @@ This is useful for teams who want to **automate branch maintenance or enforce na
 ### 2. **Example Workflow Integration**
 
 ```yaml
-name: Rename Branch
+name: Test Rename Branch
 
 on:
   workflow_dispatch:
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Exec Branch Shift
-        uses: ws2git/branch-shift@v1.5
+        uses: ws2git/branch-shift@v2
         
         with:
           github-token: ${{ secrets.YOUR_PAT }} 
@@ -76,44 +76,78 @@ jobs:
 
 ## ⚙️ How It Works
 
-This action executes a **Node.js script** (`dist/index.js`) that uses the GitHub API to perform two main steps to effectively "rename" a branch:
+This action executes a **Node.js script** (`dist/index.js`) that uses the GitHub API to rename a branch through a single, atomic operation. The action follows a clean, modular architecture with clear separation of concerns.
 
-1.  **Create a New Branch:** It creates a new branch using the `new_name` that points to the same commit as the `branch` (the old name).
-2.  **Delete the Old Branch:** It deletes the original `branch` (the old name).
+**Execution Flow:**
 
-The use of a Node.js script allows for precise control over the API calls.
+1. **Input Validation & Configuration**
+   - The `ConfigManager` validates all required inputs (`github-token`, `owner`, `repo`, `branch`, `new_name`)
+   - Ensures proper formatting and non-empty values
+   - Converts input names from `snake_case` to `camelCase` for internal use
 
-**Script logic (Conceptual):**
+2. **GitHub API Operation**
+   - The `GitHubService` uses the official GitHub Octokit SDK with full TypeScript typing
+   - Makes a single API call to `repos.renameBranch` endpoint
+   - Uses GitHub API version `2022-11-28` for compatibility
 
-```javascript
-// Step 1: Create a new branch pointing to the old branch's commit SHA
-const create_ref_url = `/repos/${owner}/${repo}/git/refs`;
-// API Call: POST /repos/{owner}/{repo}/git/refs
-// Body: { "ref": "refs/heads/new_name", "sha": <SHA_of_old_branch> }
+**Core Implementation:**
 
-// Step 2: Delete the old branch
-const delete_ref_url = `/repos/${owner}/${repo}/git/refs/heads/${branch}`;
-// API Call: DELETE /repos/{owner}/{repo}/git/refs/heads/branch
-
+```typescript
+// Single API call handling both creation and deletion internally
+await this.octokit.rest.repos.renameBranch({
+  owner,
+  repo, 
+  branch,      // Current branch name
+  new_name: newName  // Target branch name
+});
 ```
 
-If **any required parameter is missing** or the **token lacks the necessary permissions**, the script will exit with an error.
+**Key Advantages:**
+
+- **Atomic Operation**: GitHub's native `renameBranch` handles both creation and deletion in one API call
+- **Type Safety**: Uses typed Octokit SDK methods instead of generic REST calls
+- **Fail Fast**: Comprehensive input validation before any API calls
+- **Clean Architecture**: Separated concerns between configuration, orchestration, and service layers
+
+If **any required parameter is missing**, **input validation fails**, or the **token lacks necessary permissions**, the action will exit immediately with a descriptive error message.
 
 
 ## 🛡️ Security and Authentication
 
-This Action requires a GitHub Token with **write permissions** on the repository to perform branch operations. The token is passed via the **`github_token` input**.
+This Action requires a GitHub Token with **write permissions** to perform branch operations. The token is passed via the **`github-token` input** (note the exact parameter name).
 
-**Recommended**: Since renaming a branch is a highly privileged operation, it's highly recommended to use a **Personal Access Token (PAT)** stored as a **Secret** that explicitly has the `repo` scope, as the default **`${{ github.token }}`** might not have sufficient permissions, especially in organizational setups.
+**Token Requirements:**
+
+The provided token must have sufficient permissions to call the GitHub API's `repos.renameBranch` endpoint. This typically requires:
+- **`repo` scope** for personal access tokens
+- **Write access** to the repository contents
+
+**Recommended Setup:**
+
+For most scenarios, especially in organizational contexts, we recommend using a **Personal Access Token (PAT)** stored as a repository secret:
 
 ```yaml
-env:
-  # Using an explicitly created Secret PAT (e.g., REPO_RENAME_TOKEN)
-  # stored in your repository secrets.
-  GH_TOKEN: ${{ secrets.REPO_RENAME_TOKEN }}
+- name: Branch Rename
+  uses: ws2git/branch-shift@v2
+  with:
+    github-token: ${{ secrets.REPO_RENAME_TOKEN }}
+    owner: ${{ github.repository_owner }}
+    repo: ${{ github.event.repository.name }}
+    branch: 'old-branch-name'
+    new_name: 'new-branch-name'
 ```
 
-**Never expose the PAT in plain text.**
+**Alternative Options:**
+
+```yaml
+# Using GitHub's automatically provided token (may have limited permissions)
+github-token: ${{ github.token }}
+
+# Using a custom PAT with explicit repo scope
+github-token: ${{ secrets.REPO_RENAME_TOKEN }}
+```
+
+For production use, create a dedicated PAT with minimal required scopes and store it securely in your repository secrets.
 
 
 ## 📌 Notes
@@ -126,6 +160,10 @@ These are the important points to consider regarding the branch renaming operati
 
   * **Default Token Limitation**: The default token (`${{ github.token }}`) might be read-only or lack the necessary permissions to delete or create branches via the API, especially in certain contexts (like PRs from forks) or with stricter organization security settings.
   * **PAT is Safer**: For Actions that modify the repository structure (like renaming/deleting branches), using a **dedicated PAT stored as a secret** is the most reliable approach.
+  * The token is validated early in the execution flow via ConfigManager
+  * Invalid or insufficient tokens will cause immediate action failure
+  * Token values are never logged or exposed in output
+  * Never hardcode tokens in workflow files - always use secrets
 
 
 ## 🔗 Related Documentation
