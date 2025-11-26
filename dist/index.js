@@ -29922,6 +29922,75 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 2973:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConfigManager = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+class ConfigManager {
+    static getInputs() {
+        const inputs = {
+            owner: core.getInput('owner', { required: true }).trim(),
+            repo: core.getInput('repo', { required: true }).trim(),
+            branch: core.getInput('branch', { required: true }).trim(),
+            newName: core.getInput('new_name', { required: true }).trim(),
+            githubToken: core.getInput('github-token', { required: true }).trim(),
+        };
+        this.validate(inputs);
+        return inputs;
+    }
+    static validate(inputs) {
+        const { owner, repo, branch, newName, githubToken } = inputs;
+        if (!owner || !repo || !branch || !newName || !githubToken) {
+            throw new Error('All inputs are required and cannot be empty.');
+        }
+        const branchRegex = /^[a-zA-Z0-9-_./]+$/;
+        if (!branchRegex.test(newName)) {
+            throw new Error(`Invalid branch name format: '${newName}'.`);
+        }
+    }
+}
+exports.ConfigManager = ConfigManager;
+
+
+/***/ }),
+
 /***/ 9407:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -29963,34 +30032,16 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
-/**
-* Helper function to validate inputs before execution.
-* Throws an error if any validation fails.
-*/
-function validateInputs(inputs) {
-    const { owner, repo, branch, newName, githubToken } = inputs;
-    if (!owner || !repo || !branch || !newName || !githubToken) {
-        throw new Error('All input fields (owner, repo, branch, new_name) are required.');
-    }
-    const branchRegex = /^[a-zA-Z0-9-_./]+$/;
-    if (!branchRegex.test(newName)) {
-        throw new Error(`The new branch name is invalid: '${newName}'. Allowed characters: a-z, A-Z, 0-9, -, _, ., /`);
-    }
-}
+const config_1 = __nccwpck_require__(2973);
 /**
  * Main asynchronous function.
  * @returns {Promise<void>}
  */
 async function run() {
     try {
-        const inputs = {
-            githubToken: core.getInput('github_token', { required: true }).trim(),
-            owner: core.getInput('owner', { required: true }).trim(),
-            repo: core.getInput('repo', { required: true }).trim(),
-            branch: core.getInput('branch', { required: true }).trim(),
-            newName: core.getInput('new_name', { required: true }).trim(),
-        };
-        validateInputs(inputs);
+        core.info('-> Initializing action...');
+        const inputs = config_1.ConfigManager.getInputs();
+        core.info('✅ Inputs validated.');
         const octokit = github.getOctokit(inputs.githubToken);
         core.info(`Starting the renaming of '${inputs.branch}' to '${inputs.newName}'...`);
         await octokit.request('POST /repos/{owner}/{repo}/branches/{branch}/rename', {
@@ -30002,7 +30053,7 @@ async function run() {
                 'X-GitHub-Api-Version': '2022-11-28',
             },
         });
-        core.info(`✅ Branch renamed successfully.`);
+        core.info(`✅ Branch renomeada com sucesso.`);
     }
     catch (error) {
         if (error instanceof Error) {
