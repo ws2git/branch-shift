@@ -52,10 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Exec Branch Shift
-        uses: ws2git/branch-shift@v1 
+        uses: ws2git/branch-shift@v1.5
         
         with:
-          github_token: ${{ secrets.YOUR_PAT }} 
+          github-token: ${{ secrets.YOUR_PAT }} 
           owner: ${{ github.event.inputs.owner }}
           repo: ${{ github.event.inputs.repo }}
           branch: ${{ github.event.inputs.branch }}
@@ -67,7 +67,7 @@ jobs:
 
 | Name | Required | Description |
 |---|---|---|
-| `github_token` | Yes | GitHub Token with `repo` scope to authorize the API call. |
+| `github-token` | Yes | GitHub Token with `repo` scope to authorize the API call. |
 | `owner` | Yes | The owner of the repository (e.g., your-organization or your-username). |
 | `repo` | Yes | The name of the repository (e.g., your-repo). |
 | `branch` | Yes | The current name of the branch to be renamed. |
